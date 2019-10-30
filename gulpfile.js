@@ -11,17 +11,26 @@ const source = require("vinyl-source-stream");
 const browserify = require("browserify");
 
 function sassTask() {
-  console.log("ddd");
-
   return gulp
-    .src("./src/sass/style.scss")
+    .src("./src/scss/style.scss")
     .pipe(sass().on("error", sass.logError))
     .pipe(autoprefixer({ cascade: false }))
     .pipe(gulp.dest("./dist/css"))
     .pipe(browserSync.stream());
 }
 
-function jsTask() {}
+function jsTask() {
+  return browserify({
+    entries: ["./src/js/app.js"],
+    debug: true
+  })
+    .transform(babelify)
+    .bundle()
+    .pipe(plumber())
+    .pipe(source("app.js"))
+    .pipe(gulp.dest("./dist/js"))
+    .pipe(browserSync.stream());
+}
 
 function browserSyncTask(done) {
   browserSync.init({
@@ -29,7 +38,7 @@ function browserSyncTask(done) {
       baseDir: "./"
     },
     port: 3000,
-    open: true
+    open: false
   });
 
   done();
@@ -40,10 +49,35 @@ function browserSyncReload(done) {
   done();
 }
 
+function buildCss() {
+  return gulp
+    .src("./dist/css/style.css")
+    .pipe(cssnano())
+    .pipe(rename("style.min.css"))
+    .pipe(gulp.dest("./dist/css"));
+}
+
+function buildJs() {
+  return gulp
+    .src("./dist/js/app.js")
+    .pipe(uglify())
+    .pipe(rename("app.min.js"))
+    .pipe(gulp.dest("./dist/js"));
+}
+
 function watchAllFiles() {
-  gulp.watch("./src/sass/**/*.scss", sassTask);
+  gulp.watch("./src/scss/**/*.scss", sassTask);
   gulp.watch("./src/js/**/*.js", jsTask);
   gulp.watch(["./**/*.html"], browserSyncReload);
 }
 
-gulp.task("watch", gulp.parallel(watchAllFiles, browserSyncTask));
+gulp.task(
+  "watch",
+  gulp.parallel(sassTask, jsTask, watchAllFiles, browserSyncTask)
+);
+gulp.task("sass", sassTask);
+gulp.task("js", jsTask);
+gulp.task(
+  "production",
+  gulp.series("js", "sass", gulp.parallel(buildCss, buildJs))
+);
