@@ -1,5 +1,6 @@
-@import "./base";
+@import "./functions/rem";
 
 body {
   color: green;
+  font-size: rem(100);
 }
