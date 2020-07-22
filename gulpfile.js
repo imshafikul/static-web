@@ -22,7 +22,7 @@ function sassTask() {
 function jsTask() {
   return browserify({
     entries: ["./src/js/app.js"],
-    debug: true
+    debug: true,
   })
     .transform(babelify)
     .bundle()
@@ -35,10 +35,10 @@ function jsTask() {
 function browserSyncTask(done) {
   browserSync.init({
     server: {
-      baseDir: "./"
+      baseDir: "./",
     },
-    port: 3000,
-    open: false
+    port: 4000,
+    open: true,
   });
 
   done();
